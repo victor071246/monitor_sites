@@ -1,0 +1,11 @@
+interval = 30
+
+[[hosts]]
+name = "barbearia"
+host = "www.pkortesgarage.com.br"
+port = 80
+
+[[hosts]]
+name = "Outro Site"
+host = "google.com"
+port = 80
