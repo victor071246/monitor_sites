@@ -16,7 +16,7 @@ struct Monitor {
 }
 
 fn check_host(host: &str, port: u16) {
-    println!("{}", format!("[ >> ] Disparando GET em {}:{} sem TLS", host, port).purple())
+    println!("{}", format!("[ >> ] Disparando GET em {}:{} sem TLS", host, port).purple());
 
     let mut stream = match  TcpStream::connect(format!("{}:{}", host, port)) {
         Ok(s) => s,
