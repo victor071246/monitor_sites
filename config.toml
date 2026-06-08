@@ -1,14 +1,3 @@
 [daemon]
 intervalo = 15
 socket = ""
-
-# interprocess   → comunicação entre processos
-#                abstrai Unix socket (Linux/macOS) e Named pipe (Windows)
-#                você escreve o IPC uma vez, roda nas três plataformas
-
-# dirs           → caminhos do sistema por plataforma
-#                /tmp no Linux
-#                %TEMP% no Windows  
-#                /tmp no macOS
-#                também resolve home, config, cache, data por OS
-# 

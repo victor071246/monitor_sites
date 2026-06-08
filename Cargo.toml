@@ -7,10 +7,12 @@ edition = "2024"
 colored = "2"
 serde = { version = "1", features = ["derive"]}
 toml = "0.8"
-rustqlite = { version = "0.31", features = ["bundled"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
 interprocess = "2"
 dirs = "5"
 tray-icon = "0.19"
+chrono = "0.4"
+chrono-tz = "0.9"
 
 # interprocess   → comunicação entre processos
 #                abstrai Unix socket (Linux/macOS) e Named pipe (Windows)
