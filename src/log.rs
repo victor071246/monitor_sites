@@ -38,7 +38,7 @@ fn escrever(nivel: Nivel, mensagem: &str) {
     arquivo.write_all(linha.as_bytes()).ok();
 }
 
-pub fn informacao(msg: &str) { escrever(Nivel::Info, msg)}
+pub fn info(msg: &str) { escrever(Nivel::Info, msg)}
 pub fn aviso(msg: &str) {escrever(Nivel::Aviso, msg);}
 pub fn erro(msg: &str) {escrever(Nivel::Erro, msg);}
 
