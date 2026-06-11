@@ -62,6 +62,149 @@ fn criar_tabelas(conn: &Connection) {
     });
 }
 
+pub fn inserir_host(conn: &Connection, dominio: Option<&str>, ip: Option<&str>) -> i64 {
+    conn.execute(
+        "INSERT INTO hosts (dominio, ip) VALUES (?1, ?2)",
+        rusqlite::params![dominio, ip],
+    )
+    .unwrap_or_else(|e| {
+        crate::log::erro(&format!("erro ao inserir host: {}", e));
+        panic!();
+    });
+    conn.last_insert_rowid()
+}
+
+pub fn inserir_porta(conn: &Connection, host_id: i64, porta: u16, esperado: bool) {
+    conn.execute(
+        "INSERT INTO portas (host_id, porta, esperado) VALUES (?1, ?2, ?3)",
+        rusqlite::params![host_id, porta, esperado as i64],
+    )
+    .unwrap_or_else(|e| {
+        crate::log::erro(&format!("erro ao inserir porta: {}", e));
+        panic!();
+    });
+}
+
+pub struct Host {
+    pub id: i64,
+    pub dominio: Option<String>,
+    pub ip: Option<String>,
+    pub status: String,
+}
+
+pub struct Porta {
+    pub id: i64,
+    pub host_id: i64,
+    pub porta: u16,
+    pub status: String,
+    pub esperado: bool
+}
+
+pub fn buscar_hosts(conn: &Connection) -> Vec<Host> {
+    let mut stmt  = conn.prepare("SELECT id, dominio, ip, status FROM hosts")
+        .unwrap_or_else(|e| {
+            crate::log::erro(&format!("erro ao preparar query de hosts: {}", e));
+            panic!();
+        });
+
+    stmt.query_map([], |row| {
+        Ok(Host {
+            id: row.get(0)?,
+            dominio: row.get(1)?,
+            ip: row.get(2)?,
+            status: row.get(3)?,
+        })
+    })
+    .unwrap_or_else(|e| {
+        crate::log::erro(&format!("erro ao executar query de hosts: {}", e));
+        panic!();
+    })
+    .filter_map(|r| r.ok())
+    .collect()
+}
+
+pub fn buscar_portas_do_host(conn: &Connection, host_id: i64) -> Vec<Porta> {
+    let mut stmt = conn.prepare(
+        "SELECT id, host_id, porta, status, esperado FROM portas WHERE host_id = ?1"
+    )
+    .unwrap_or_else(|e| {
+        crate::log::erro(&format!("erro ao preparar query de portas: {}", e));
+        panic!();
+    });
+
+    stmt.query_map(rusqlite::params![host_id], |row| {
+        Ok(Porta {
+            id: row.get(0)?,
+            host_id: row.get(1)?,
+            porta: row.get(2)?,
+            status: row.get(3)?,
+            esperado: row.get::<_, i64>(4)? != 0
+        })
+    })
+    .unwrap_or_else(|e| {
+        crate::log::erro(&format!("erro ao executar query de portas: {}", e));
+        panic!();
+    })
+    .filter_map(|r| r.ok())
+    .collect()
+}
+
+pub fn atualizar_status_porta(conn: &Connection, id: i64, status: &str, agora: i64) {
+    let coluna_horario = if status == "ativo" {
+        "ultimo_horario_ativo"
+    } else {
+        "ultimo_horario_inativo"
+    };
+
+    let coluna_tempo = if status == "ativo" {
+        "tempo_ativo"
+    } else {
+        "tempo_inativo"
+    };
+
+    let sql = format!(
+        "UPDATE portas SET status = ?1, checado_em = ?2, {} = ?2, {} = {} + ?3 WHERE id = ?4", 
+        coluna_horario, coluna_tempo, coluna_tempo
+    );
+
+    conn.execute(
+        &sql,
+        rusqlite::params![status, agora, 1i64, id],
+    )
+    .unwrap_or_else(|e| {
+        crate::log::erro(&format!("erro ao atualizar status da porta {}: {}", id, e));
+        panic!();
+    });
+}
+
+pub fn atualizar_status_host(conn: &Connection, id: i64, status: &str, agora: i64) {
+    let coluna_horario = if status == "ativo" {
+        "ultimo_horario_ativo"
+    } else {
+        "ultimo_horario_inativo"
+    };
+
+    let coluna_tempo = if status == "ativo" {
+        "tempo_ativo"
+    } else {
+        "tempo_inativo"
+    };
+
+    let sql = format!(
+        "UPDATE hosts SET status = ?1, checado_em = ?2, {} = ?2, {} = {} + ?3 WHERE id = ?4",
+        coluna_horario, coluna_tempo, coluna_tempo
+    );
+
+    conn.execute(
+        &sql,
+        rusqlite::params![status, agora, 1i64, id]
+    )
+    .unwrap_or_else(|e| {
+        crate::log::erro(&format!("erro ao atualizar status do host {}: {}", id, e));
+        panic!();
+    });
+}
+
 // ============================================================
 // NOTAS DE ESTUDO
 // ============================================================
@@ -97,7 +240,15 @@ fn criar_tabelas(conn: &Connection) {
 //   — isso vai ser necessário quando adicionar inserção/deleção.
 //
 // unwrap_or_else vs ?
-//   o operador ? propaga o erro pra quem chamou a função.
-//   unwrap_or_else trata o erro ali mesmo — útil quando a função
-//   não pode retornar Result (como aqui, que retorna Connection direto)
-//   e quando você quer registrar no log antes de encerrar.
+//   o operador ? propaga o erro pra quem chamou a função — só funciona
+//   em funções que retornam Result ou Option.
+//   unwrap_or_else trata na hora — útil quando a função retorna o valor
+//   puro (Connection, PathBuf) e você quer logar antes de encerrar.
+//
+// Option vs Result
+//   Result<T, E> → operação que pode falhar com um erro descrito (E)
+//   Option<T>    → valor que pode simplesmente não existir (None)
+//   dirs::data_dir() retorna Option porque não há "erro" — o OS
+//   simplesmente pode não ter esse caminho definido.
+//   por isso o closure do unwrap_or_else recebe () e não |e|:
+//   não tem erro pra capturar, só ausência de valor.

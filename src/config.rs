@@ -22,8 +22,8 @@ pub fn carregar () -> Config {
     toml::from_str(&conteudo)
         .unwrap_or_else(|e| {
             crate::log::erro(&format!("erro ao parsear config.toml: {}", e));
-        });
-        panic!();
+            panic!();
+        })
 }
 
 fn caminho_config() -> PathBuf {
