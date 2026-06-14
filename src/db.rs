@@ -202,7 +202,16 @@ pub fn atualizar_status_host(conn: &Connection, id: i64, status: &str, agora: i6
     .unwrap_or_else(|e| {
         crate::log::erro(&format!("erro ao atualizar status do host {}: {}", id, e));
         panic!();
-    });
+    }); 
+}
+
+pub fn abrir_conexao() -> Connection {
+    let caminho = caminho_banco();
+    Connection::open(&caminho)
+        .unwrap_or_else(|e| {
+            crate::log::erro(&format!("erro ao abrir conexão auxiliar: {}", e));
+            panic!();
+        })
 }
 
 // ============================================================
@@ -252,3 +261,20 @@ pub fn atualizar_status_host(conn: &Connection, id: i64, status: &str, agora: i6
 //   simplesmente pode não ter esse caminho definido.
 //   por isso o closure do unwrap_or_else recebe () e não |e|:
 //   não tem erro pra capturar, só ausência de valor.
+// abrir_conexao()
+//   abre uma conexão nova com o mesmo banco sem criar tabelas.
+//   necessário porque rusqlite::Connection não implementa Send —
+//   não pode ser compartilhada entre threads diretamente.
+//   cada thread que precisa acessar o banco abre sua própria conexão.
+//   o SQLite suporta múltiplas conexões simultâneas no mesmo arquivo
+//   com segurança — usa WAL (Write-Ahead Logging) internamente
+//   pra evitar conflito entre leituras e escritas concorrentes.
+//   usada pelo ipc.rs que roda em thread separada do daemon principal.
+//
+// por que não Arc<Mutex<Connection>>?
+//   seria possível — envolve a Connection num Mutex pra acesso exclusivo
+//   e num Arc pra compartilhar entre threads com contagem de referência.
+//   mas isso serializa todos os acessos — enquanto o IPC usa o banco,
+//   o daemon espera, e vice-versa.
+//   duas conexões independentes é mais simples e mais performático
+//   pra esse caso de uso onde as operações são rápidas e pouco frequentes.

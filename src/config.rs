@@ -14,6 +14,7 @@ pub struct Daemon {
 
 pub fn carregar () -> Config {
     let caminho = caminho_config();
+    garantir_config(&caminho);
     let conteudo = std::fs::read_to_string(&caminho)
         .unwrap_or_else(|e| {
             crate::log::erro(&format!("erro ao ler config.toml: {}", e));
@@ -35,7 +36,19 @@ fn caminho_config() -> PathBuf {
     path.push("monitor_sites");
     path.push("config.toml");
     path
+}
+
+fn garantir_config(caminho: &PathBuf) {
+    if !caminho.exists() {
+        let conteudo_padrao = "[daemon]\nintervalo = 15\nsocket = \"\"\n";
+        std::fs::write(caminho, conteudo_padrao)
+            .unwrap_or_else(|e| {
+                crate::log::erro(&format!("erro ao criar config.toml padrão: {}", e));
+                panic!();
+            });
+        crate::log::info("config.toml criado com valores padrão");
     }
+}
 
 // ============================================================
 // NOTAS DE ESTUDO
