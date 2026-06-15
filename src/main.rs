@@ -4,16 +4,30 @@ mod log;
 mod scanner;
 mod checker;
 mod daemon;
+mod ipc;
 
 use colored::Colorize;
 use std::thread;
 use std::io::Write;
 use std::time::Duration;
+use std::sync::mpsc;
 
 fn main() {
     let config = config::carregar();
     let conn = db::inicializar();
     
+    let (tx, rx) = std::sync::mpsc::channel();
+    thread::spawn(move || {
+        ipc::iniciar(tx);
+    });
+    let protocolo_iniciado = rx.recv().unwrap_or(false);
+
+    if protocolo_iniciado {
+        println!("{}", "[ OK ] ipc iniciado".purple());
+    } else {
+        println!("{}", "[ !! ] ipc falhou".purple());
+    }
+
     thread::spawn(||{
         let frames = [
             "[ ** ] daemon rodando    ",
