@@ -5,6 +5,7 @@ mod scanner;
 mod checker;
 mod daemon;
 mod ipc;
+mod gui;
 
 use colored::Colorize;
 use std::thread;

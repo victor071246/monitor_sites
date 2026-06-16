@@ -14,6 +14,9 @@ tray-icon = "0.19"
 chrono = "0.4"
 chrono-tz = "0.9"
 serde_json = "1"
+egui = "0.27"
+eframe = "0.27"
+
 
 # interprocess   → comunicação entre processos
 #                abstrai Unix socket (Linux/macOS) e Named pipe (Windows)
