@@ -11,7 +11,7 @@ pub fn enviar_comando(json: &str) -> Option<String> {
         stream.write_all(json.as_bytes()).ok()?;
         stream.write_all(b"\n").ok()?;
 
-        let mut respostas = String::new();
+        let mut resposta = String::new();
         stream.read_to_string(&mut resposta).ok()?;
         Some(resposta)
 }

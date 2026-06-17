@@ -11,41 +11,29 @@ use colored::Colorize;
 use std::thread;
 use std::io::Write;
 use std::time::Duration;
-use std::sync::mpsc;
 
 fn main() {
     let config = config::carregar();
     let conn = db::inicializar();
-    
+
     let (tx, rx) = std::sync::mpsc::channel();
     thread::spawn(move || {
         ipc::iniciar(tx);
     });
-    let protocolo_iniciado = rx.recv().unwrap_or(false);
 
+    let protocolo_iniciado = rx.recv().unwrap_or(false);
     if protocolo_iniciado {
         println!("{}", "[ OK ] ipc iniciado".purple());
     } else {
-        println!("{}", "[ !! ] ipc falhou".purple());
+        println!("{}", "[ !! ] ipc falhou".red());
     }
 
-    thread::spawn(||{
-        let frames = [
-            "[ ** ] daemon rodando    ",
-            "[ ** ] daemon rodando .  ",
-            "[ ** ] daemon rodando .. ",
-            "[ ** ] daemon rodando ..."
-        ];
-        let mut i = 0;
-        loop {
-            print!("\r{}", frames[i % 4].purple());
-            std::io::stdout().flush().ok();
-            i += 1;
-            thread::sleep(Duration::from_millis(500));
-        }
+    thread::spawn(move || {
+        daemon::iniciar(&conn, config.daemon.intervalo);
     });
 
-    daemon::iniciar(&conn, config.daemon.intervalo);
+    // GUI fica na thread principal
+    gui::iniciar();
 }
 
 // ============================================================
