@@ -100,8 +100,12 @@ fn executar_comando(conn: &rusqlite::Connection, cmd: Comando) -> Resposta {
         "listar_hosts" => {
             let hosts = crate::db::buscar_hosts(conn);
             let lista: Vec<String> = hosts.iter()
-                .map(|h| format!("id={} dominio={:?} ip={:?} status={}",
-                h.id, h.dominio, h.ip, h.status))
+                .map(|h| {
+                    let endereco = h.dominio.as_deref()
+                    .or(h.ip.as_deref())
+                    .unwrap_or("sem endereço");
+                    format!("{}::{}::{}", h.id, endereco, h.status)
+                })
                 .collect();
             Resposta { ok: true, dados: Some(lista.join("|")), erro: None}
         }
