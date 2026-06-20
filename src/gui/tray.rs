@@ -3,7 +3,7 @@ use gtk;
 use tray_icon::Icon;
 use tray_icon::{
     menu::{Menu, MenuItem},
-    TrayIcon, TrayIconBuilder,
+    TrayIcon, TrayIconBuilder, Column
 };
 
 pub struct AppGui {
@@ -120,14 +120,49 @@ impl eframe::App for AppGui {
             ui.separator();
 
             ui.label("Hosts monitorados:");
-            egui::ScrollArea::vertical()
-                .max_height(300.0)
-                .show(ui, |ui| {
-                    for host in &self.hosts {
-                        ui.label(host);
-                    }
-                    if self.hosts.is_empty() {
-                        ui.label("nenhum host cadastrado");
+            TableBuilder::new(ui)
+                .striped(true)
+                .column(Column::remainder())
+                .column(Column::auto())
+                .column(Column:: auto())
+                .header(20.0, |mut header| {
+                    header.col(|ui| { ui.strong("Host"); });
+                    header.col(|ui| { ui.strong("Status")});
+                    header.col(|ui| { ui.strong(""); });
+                })
+                .body(|mut body| {
+                    for host_str in &self.hosts.clone() {
+                        let partes: Vec<&str> = host_str.split("::").collect();
+                        if partes.len() != 3 {continue; }
+
+                        let id: i64 = ártes[0].parse().unwrap_or(0);
+                        let endereco = partes[1];
+                        let status = partes[2];
+
+                        body.row(24.0, |mut row| {
+                            row.col(|ui| {
+                                if ui.selectable_label(false, endereco).clicked() {
+                                    self.host_selecionado = Some((id, endereco.to_string()));
+                                }
+                            });
+                            row.col(|ui| {
+                                let (texto, cor) = if status == "ativo" {
+                                     ("● ATIVO", egui::Color32::PURPLE)
+                                } else {
+                                     ("○ FALHA", egui::Color32::GREY)
+                                };
+                                ui.colored_label(cor, texto);
+                            });
+                            row.col(|ui| {
+                                if ui.small_button("[X]").clicked() {
+                                    let json = format!(
+                                        r#"{{"comando":"remover_host", "host_id":{}}"#, id
+                                    );
+                                    crate::gui::socket::enviar_comando(&json);
+                                    self.carregar_hosts();
+                                }
+                            })
+                        })
                     }
                 });
 

@@ -205,6 +205,21 @@ pub fn atualizar_status_host(conn: &Connection, id: i64, status: &str, agora: i6
     }); 
 }
 
+pub fn remover_hosts(conn: &Connection, id: i64) {
+    // remove as portas primeiro por causa da FOREIGN KEY
+    conn.execute("DELETE FROM portas WHERE host_id = ?1", rusqlite::params![id])
+        .unwrap_or_else(|e| {
+            crate::log::erro(&format!("erro ao remover portas do host {}: {}", id, e));
+            panic!();
+        });
+
+    conn.execute("DELETE FROM hosts WHERE id = ?1", rusqlite::params![id])
+        .unwrap_or_else(|e| {
+            crate::log::erro(&format!("erro ao remover host {}: {}", id, e));
+            panic!();
+        })
+}
+
 pub fn abrir_conexao() -> Connection {
     let caminho = caminho_banco();
     Connection::open(&caminho)

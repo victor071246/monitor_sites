@@ -109,6 +109,20 @@ fn executar_comando(conn: &rusqlite::Connection, cmd: Comando) -> Resposta {
                 .collect();
             Resposta { ok: true, dados: Some(lista.join("|")), erro: None}
         }
+        "remover_host" => {
+            match cmd.host_id {
+                Some(host_id) => {
+                    crate::db::remover_host(conn, host_id);
+                    crate::log::info(&format!("host removido id={}", host_id));
+                    Resposta { ok: true, dados: None, erro: None}
+                }
+                None => Resposta {
+                    ok: false,
+                    dados: None,
+                    erro: Some("host_id é obrigatório".to_string())
+                }
+            }
+        }
         _ => Resposta {
             ok: false,
             dados: None,
