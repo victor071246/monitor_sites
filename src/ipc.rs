@@ -112,7 +112,7 @@ fn executar_comando(conn: &rusqlite::Connection, cmd: Comando) -> Resposta {
         "remover_host" => {
             match cmd.host_id {
                 Some(host_id) => {
-                    crate::db::remover_host(conn, host_id);
+                    crate::db::remover_hosts(conn, host_id);
                     crate::log::info(&format!("host removido id={}", host_id));
                     Resposta { ok: true, dados: None, erro: None}
                 }

@@ -10,17 +10,22 @@ pub fn checar_porta(endereco: &str, porta: u16) -> StatusConexao {
     let destino = format!("{}:{}", endereco, porta);
     let timeout = Duration::from_secs(5);
 
-    let addr = destino
-        .to_socket_addrs()
-        .unwrap_or_else(|e| {
-            crate::log::erro(&format!("erro ao resolver endereço {}: {}", destino, e));
-            panic!();
-        })
-        .next()
-        .unwrap_or_else(|| {
+   let mut enderecos = match destino.to_socket_addrs() {
+    Ok(e) => e,
+    Err(e) => {
+        crate::log::erro(&format!("erro ao resolver endereço {}: {}", destino, e));
+        return StatusConexao::Inativo;
+    }
+   };
+
+   let addr = match enderecos.next() {
+        Some(a) => a,
+        None => {
             crate::log::erro(&format!("nenhum endereço resolvido para {}", destino));
-            panic!();
-        });
+            return StatusConexao::Inativo;
+        }
+   };
+        
     
     match TcpStream::connect_timeout(&addr, timeout) {
         Ok(_) => StatusConexao::Ativo,

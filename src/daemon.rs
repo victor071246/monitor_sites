@@ -57,7 +57,14 @@ fn executar_ciclo(conn: &Connection) {
             crate::db::atualizar_status_porta(conn, porta.id, status, agora);
         }
 
-        let status_host = if alguma_inativa { "inativo" } else { "ativo" };
+        let status_host = if portas.is_empty() {
+            "desconhecido"
+        } else if alguma_inativa {
+            "inativo"
+        } else {
+            "ativo"
+        };
+
         crate::db::atualizar_status_host(conn, *host_id, status_host, agora);
     }
 }

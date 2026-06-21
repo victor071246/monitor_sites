@@ -217,7 +217,7 @@ pub fn remover_hosts(conn: &Connection, id: i64) {
         .unwrap_or_else(|e| {
             crate::log::erro(&format!("erro ao remover host {}: {}", id, e));
             panic!();
-        })
+        });
 }
 
 pub fn abrir_conexao() -> Connection {
