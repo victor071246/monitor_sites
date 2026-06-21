@@ -40,6 +40,9 @@ fn caminho_config() -> PathBuf {
 
 fn garantir_config(caminho: &PathBuf) {
     if !caminho.exists() {
+        if let Some(diretorio) = caminho.parent() {
+            std::fs::create_dir_all(diretorio).ok();
+        }
         let conteudo_padrao = "[daemon]\nintervalo = 15\nsocket = \"\"\n";
         std::fs::write(caminho, conteudo_padrao)
             .unwrap_or_else(|e| {

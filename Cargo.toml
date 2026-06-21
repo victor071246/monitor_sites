@@ -10,6 +10,10 @@ toml = "0.8"
 rusqlite = { version = "0.31", features = ["bundled"] }
 interprocess = "2"
 dirs = "5"
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+tray-icon = "0.19"
+[target.'cfg(target_os = "windows")'.dependencies]
 tray-icon = "0.19"
 chrono = "0.4"
 chrono-tz = "0.9"
@@ -17,7 +21,6 @@ serde_json = "1"
 egui = "0.27"
 eframe = "0.27"
 image = "0.24"
-gtk = "0.18"
 egui_extras = "0.27"
 
 

@@ -1,4 +1,5 @@
 use eframe::egui;
+#[cfg(target_os = "linux")]
 use gtk;
 use tray_icon::Icon;
 use tray_icon::{
@@ -46,6 +47,7 @@ impl Default for AppGui {
 }
 
 pub fn iniciar() {
+    #[cfg(target_os= "linux")]
     gtk::init().expect("falha ao inicializar GTK");
 
     //carrega o icone - bytes embutios no binário em tempo de compilação

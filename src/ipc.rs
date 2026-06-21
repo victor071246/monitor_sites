@@ -1,5 +1,5 @@
 use interprocess::local_socket::{
-    GenericFilePath, ListenerOptions, Stream, ToFsName, traits::ListenerExt
+    GenericNamespaced, ListenerOptions, Stream, ToNsName, traits::ListenerExt
 };
 use std::io::{BufRead, BufReader, Write};
 use serde::{Deserialize, Serialize};
@@ -21,15 +21,13 @@ struct Resposta {
 }
 
 pub fn iniciar(tx: std::sync::mpsc::Sender<bool>) {
-    let nome = "/tmp/monitor_sites.sock"
-        .to_fs_name::<GenericFilePath>()
+    let nome = "monitor_sites.sock"
+        .to_ns_name::<GenericNamespaced>()
         .unwrap_or_else(|e|{
             tx.send(false).ok();
             crate::log::erro(&format!("erro ao criar nome do socket: {}", e));
             panic!();
         });
-
-    std::fs::remove_file("/tmp/monitor_sites.sock").ok();
 
     let listener = ListenerOptions::new()
         .name(nome)
